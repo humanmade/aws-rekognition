@@ -1,6 +1,6 @@
 <table width="100%">
 	<tr>
-		<td align="left" width="70">
+		<td align="left" width="70" colspan="2">
 			<strong>AWS Rekognition</strong><br />
 			A lightweight plugin to add keywords to WordPress image uploads via automatic feature detection. Requires S3 Uploads.
 		</td>
