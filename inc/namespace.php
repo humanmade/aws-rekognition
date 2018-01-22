@@ -90,7 +90,7 @@ function get_rekognition_client() : RekognitionClient {
 }
 
 /**
- * Filter the SQL clauses of an attachment query to include keywrods.
+ * Filter the SQL clauses of an attachment query to include keywords.
  *
  * @param array $clauses An array including WHERE, GROUP BY, JOIN, ORDER BY,
  *                       DISTINCT, fields (SELECT), and LIMITS clauses.
