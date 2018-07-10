@@ -17,8 +17,8 @@ const CRON_NAME = 'hm_aws_rekognition_update_image';
  * @return $data
  */
 function on_update_attachment_metadata( array $data, int $id ) : array {
-	$image_types = $displayable_image_types = [ IMAGETYPE_GIF, IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_BMP ];
-	$mime = exif_imagetype( get_attached_file( $id ) );
+	$image_types = [ IMAGETYPE_GIF, IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_BMP ];
+	$mime        = exif_imagetype( get_attached_file( $id ) );
 	if ( ! in_array( $mime, $image_types, true ) ) {
 		return $data;
 	}
@@ -33,20 +33,25 @@ function on_update_attachment_metadata( array $data, int $id ) : array {
  * @return bool|WP_Error
  */
 function fetch_labels_for_attachment( int $id ) {
-	$file = get_attached_file( $id );
+	$file   = get_attached_file( $id );
 	$client = get_rekognition_client();
 
-	if ( ! preg_match( '#s3://(?P<bucket>[^/]+)/(?P<path>.*)#', $file, $matches ) ) {
-		return new WP_Error( 's3-path-not-found', 'The image path doesn\'t appear to be using S3.' );
+	if ( preg_match( '#s3://(?P<bucket>[^/]+)/(?P<path>.*)#', $file, $matches ) ) {
+		$image_args = [
+			'S3Object' => [
+				'Bucket' => $matches['bucket'],
+				'Name'   => $matches['path'],
+			],
+		];
+	} else {
+		$image_args = [
+			'Bytes' => file_get_contents( $file ),
+		];
 	}
+
 	try {
 		$response = $client->detectLabels( [
-			'Image' => [
-				'S3Object' => [
-					'Bucket' => $matches['bucket'],
-					'Name'   => $matches['path'],
-				],
-			],
+			'Image'         => $image_args,
 			'MinConfidence' => 80,
 		] );
 	} catch ( Exception $e ) {
@@ -72,13 +77,16 @@ function get_attachment_labels( int $id ) : array {
 }
 
 /**
- * Get the AWS Recognition client.
+ * Get the AWS Rekognition client.
  *
  * @return \Aws\Rekognition\RekognitionClient
  */
 function get_rekognition_client() : RekognitionClient {
 	if ( defined( 'S3_UPLOADS_KEY' ) && defined( 'S3_UPLOADS_SECRET' ) ) {
-		$credentials = [ 'key' => S3_UPLOADS_KEY, 'secret' => S3_UPLOADS_SECRET ];
+		$credentials = [
+			'key'    => S3_UPLOADS_KEY,
+			'secret' => S3_UPLOADS_SECRET,
+		];
 	} else {
 		$credentials = null;
 	}
