@@ -9,6 +9,17 @@ use WP_Error;
 const CRON_NAME = 'hm_aws_rekognition_update_image';
 
 /**
+ * Register hooks here.
+ */
+function setup() {
+	add_filter( 'wp_update_attachment_metadata', __NAMESPACE__ . '\\on_update_attachment_metadata', 10, 2 );
+	add_filter( 'pre_get_posts', __NAMESPACE__ . '\\filter_query' );
+	add_filter( 'admin_init', __NAMESPACE__ . '\\Admin\\bootstrap' );
+	add_action( CRON_NAME, __NAMESPACE__ . '\\update_attachment_keywords' );
+	add_action( 'init', __NAMESPACE__ . '\\attachment_taxonomies', 1000 );
+}
+
+/**
  * Use the wp_update_attachment_metadata to make sure the image
  * is (re)processed when the image meta data is changed.
  *
@@ -68,8 +79,12 @@ function update_attachment_keywords( int $id ) {
 		update_post_meta( $id, 'hm_aws_rekogition_error', $labels );
 		return;
 	}
-	update_post_meta( $id, 'hm_aws_rekogition_keywords', implode( ' ', $labels ) );
+
 	update_post_meta( $id, 'hm_aws_rekogition_labels', $labels );
+	update_post_meta( $id, 'hm_aws_rekogition_keywords', implode( ' ', $labels ) );
+
+	// Set labels as tags.
+	wp_set_object_terms( $id, $labels, 'post_tag', true );
 }
 
 function get_attachment_labels( int $id ) : array {
@@ -120,4 +135,11 @@ function filter_query_attachment_keywords( array $clauses ) : array {
 	);
 
 	return $clauses;
+}
+
+/**
+ * Register / add attachment taxonomies here.
+ */
+function attachment_taxonomies() {
+	register_taxonomy_for_object_type( 'post_tag', 'attachment' );
 }
