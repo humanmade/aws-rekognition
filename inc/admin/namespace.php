@@ -23,12 +23,15 @@ function output_metabox( WP_Post $post ) {
 function admin_ajax_update_labels() {
 	error_reporting( E_ALL );
 	ini_set( 'display_errors', 'on' );
+
 	$post_id = intval( $_GET['id'] );
-	$update = AWS_Rekognition\update_attachment_keywords( $post_id );
+	$update = AWS_Rekognition\update_attachment_data( $post_id );
+
 	if ( is_wp_error( $update ) ) {
 		wp_send_json_error( $update );
 		exit;
 	}
+
 	$labels = AWS_Rekognition\get_attachment_labels( $post_id );
 
 	echo wp_json_encode( $labels );

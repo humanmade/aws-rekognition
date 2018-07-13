@@ -4,15 +4,15 @@ namespace HM\AWS_Rekognition;
 
 use WP_CLI_Command;
 
-class CLI_Commands extends WP_CLI_Command {
+class CLI_Command extends WP_CLI_Command {
 
 	/**
 	 * List rekognition keyworkds for a given attachment.
 	 *
-	 * @subcommand list-labels-for-attachment <attachment-id>
+	 * @subcommand list-data-for-attachment <attachment-id>
 	 */
-	public function list_labels_for_attachment( array $args, array $args_assoc ) {
-		print_r( fetch_labels_for_attachment( $args[0] ) );
+	public function list_data_for_attachment( array $args, array $args_assoc ) {
+		print_r( fetch_data_for_attachment( $args[0] ) );
 	}
 
 	/**
@@ -29,7 +29,7 @@ class CLI_Commands extends WP_CLI_Command {
 		}
 
 		foreach ( $attachments as $attachment ) {
-			update_attachment_keywords( $attachment );
+			update_attachment_data( $attachment );
 		}
 	}
 }

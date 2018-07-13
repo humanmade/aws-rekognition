@@ -14,7 +14,7 @@ require __DIR__ . '/inc/admin/namespace.php';
 
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	require __DIR__ . '/inc/class-cli-command.php';
-	WP_CLI::add_command( 'aws-rekognition', __NAMESPACE__ . '\\CLI_Commands' );
+	WP_CLI::add_command( 'aws-rekognition', __NAMESPACE__ . '\\CLI_Command' );
 }
 
 add_action( 'plugins_loaded', function () {
