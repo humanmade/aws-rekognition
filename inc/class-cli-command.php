@@ -25,7 +25,7 @@ class CLI_Command extends WP_CLI_Command {
 		if ( isset( $args_assoc['attachments'] ) ) {
 			$attachments = explode( ',', $args_assoc['attachments'] );
 		} else {
-			$attachments = get_posts( [ 'post_type' => 'attachment', 'fields' => 'ids' ] );
+			$attachments = get_posts( [ 'post_type' => 'attachment', 'fields' => 'ids', 'posts_per_page' => -1 ] );
 		}
 
 		foreach ( $attachments as $attachment ) {

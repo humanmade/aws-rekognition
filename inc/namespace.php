@@ -13,7 +13,7 @@ const CRON_NAME = 'hm_aws_rekognition_update_image';
  */
 function setup() {
 	add_filter( 'wp_update_attachment_metadata', __NAMESPACE__ . '\\on_update_attachment_metadata', 10, 2 );
-	add_filter( 'pre_get_posts', __NAMESPACE__ . '\\filter_query' );
+	add_filter( 'posts_clauses', __NAMESPACE__ . '\\filter_query_attachment_keywords' );
 	add_filter( 'admin_init', __NAMESPACE__ . '\\Admin\\bootstrap' );
 	add_action( CRON_NAME, __NAMESPACE__ . '\\update_attachment_data' );
 	add_action( 'init', __NAMESPACE__ . '\\attachment_taxonomies', 1000 );
@@ -93,7 +93,7 @@ function fetch_data_for_attachment( int $id ) {
 	 * @param bool $get_moderation_labels
 	 * @param int  $id
 	 */
-	$get_moderation_labels = apply_filters( 'hm.aws.rekognition.moderation_labels', false, $id );
+	$get_moderation_labels = apply_filters( 'hm.aws.rekognition.moderation', false, $id );
 
 	if ( $get_moderation_labels ) {
 		try {
@@ -202,12 +202,12 @@ function update_attachment_data( int $id ) {
 
 	foreach ( $data as $type => $response ) {
 		if ( is_wp_error( $response ) ) {
-			update_post_meta( $id, "hm_aws_rekogition_error_{$type}", $response );
+			update_post_meta( $id, "hm_aws_rekognition_error_{$type}", $response );
 			continue;
 		}
 
 		// Save the metadata.
-		update_post_meta( $id, "hm_aws_rekogition_{$type}", $response );
+		update_post_meta( $id, "hm_aws_rekognition_{$type}", $response );
 
 		// Carry out custom handling & processing.
 		switch ( $type ) {
@@ -251,11 +251,11 @@ function update_attachment_data( int $id ) {
 	$keywords = apply_filters( 'hm.aws.rekognition.keywords', $keywords, $data, $id );
 
 	// Store keywords for use with search queries.
-	update_post_meta( $id, 'hm_aws_rekogition_keywords', implode( "\n", $keywords ) );
+	update_post_meta( $id, 'hm_aws_rekognition_keywords', strtolower( implode( "\t", $keywords ) ) );
 }
 
 function get_attachment_labels( int $id ) : array {
-	return get_post_meta( $id, 'hm_aws_rekogition_labels', true ) ?: [];
+	return get_post_meta( $id, 'hm_aws_rekognition_labels', true ) ?: [];
 }
 
 /**
@@ -288,16 +288,19 @@ function get_rekognition_client() : RekognitionClient {
  */
 function filter_query_attachment_keywords( array $clauses ) : array {
 	global $wpdb;
-	remove_filter( 'posts_clauses', __FUNCTION__ );
+
+	if ( ! preg_match( "/\({$wpdb->posts}.post_content (NOT LIKE|LIKE) (\'[^']+\')\)/", $clauses['where'] ) ) {
+		return $clauses;
+	}
 
 	// Add a LEFT JOIN of the postmeta table so we don't trample existing JOINs.
-	$clauses['join'] .= " LEFT JOIN {$wpdb->postmeta} AS sq_hm_aws_rekogition_keywords ON ( {$wpdb->posts}.ID = sq_hm_aws_rekogition_keywords.post_id AND sq_hm_aws_rekogition_keywords.meta_key = 'hm_aws_rekogition_keywords' )";
+	$clauses['join'] .= " LEFT JOIN {$wpdb->postmeta} AS sq_hm_aws_rekognition_keywords ON ( {$wpdb->posts}.ID = sq_hm_aws_rekognition_keywords.post_id AND sq_hm_aws_rekognition_keywords.meta_key = 'hm_aws_rekognition_keywords' )";
 
 	$clauses['groupby'] = "{$wpdb->posts}.ID";
 
 	$clauses['where'] = preg_replace(
 		"/\({$wpdb->posts}.post_content (NOT LIKE|LIKE) (\'[^']+\')\)/",
-		'$0 OR ( sq_hm_aws_rekogition_keywords.meta_value $1 $2 )',
+		'$0 OR ( sq_hm_aws_rekognition_keywords.meta_value $1 $2 )',
 		$clauses['where']
 	);
 
@@ -332,7 +335,5 @@ function attachment_taxonomies() {
 		'rewrite'           => [ 'slug' => 'label' ],
 	];
 
-	register_taxonomy( 'rekognition_labels', $args );
-
-	register_taxonomy_for_object_type( 'rekognition_labels', 'attachment' );
+	register_taxonomy( 'rekognition_labels', [ 'attachment' ], $args );
 }
