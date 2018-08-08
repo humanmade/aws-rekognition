@@ -77,10 +77,11 @@ function fetch_data_for_attachment( int $id ) {
 		try {
 			$labels_response = $client->detectLabels( [
 				'Image'         => $image_args,
-				'MinConfidence' => 80,
+				'MinConfidence' => 60.0,
+				'MaxLabels'     => 50,
 			] );
 
-			$responses['labels'] = wp_list_pluck( $labels_response['Labels'], 'Name' );
+			$responses['labels'] = $labels_response['Labels'];
 		} catch ( Exception $e ) {
 			$responses['labels'] = new WP_Error( 'aws-error', $e->getMessage() );
 		}
@@ -99,7 +100,8 @@ function fetch_data_for_attachment( int $id ) {
 		try {
 			$moderation_response = $client->detectModerationLabels( [
 				'Image'         => $image_args,
-				'MinConfidence' => 80,
+				'MinConfidence' => 60.0,
+				'MaxLabels'     => 50,
 			] );
 
 			$responses['moderation'] = $moderation_response['ModerationLabels'];
@@ -116,25 +118,11 @@ function fetch_data_for_attachment( int $id ) {
 	 */
 	$get_faces = apply_filters( 'hm.aws.rekognition.faces', false, $id );
 
-	$face_attributes = [ 'BoundingBox', 'Confidence', 'Emotions', 'AgeRange', 'Gender' ];
-
-	/**
-	 * Filters the face attributes returned by Rekognition.
-	 * Defaults to BoundingBox, Confidence, Emotions, AgeRange, Gender
-	 *
-	 * You can find the full list here:
-	 * https://docs.aws.amazon.com/aws-sdk-php/v3/api/api-rekognition-2016-06-27.html#detectfaces
-	 *
-	 * @param array $face_attributes Array of attributes to return.
-	 * @param int   $id              The attachment ID.
-	 */
-	$face_attributes = apply_filters( 'hm.aws.rekognition.faces.attributes', $face_attributes, $id );
-
 	if ( $get_faces ) {
 		try {
 			$faces_response = $client->detectFaces( [
 				'Image'      => $image_args,
-				'Attributes' => $face_attributes,
+				'Attributes' => [ 'ALL' ],
 			] );
 
 			$responses['faces'] = $faces_response['FaceDetails'];
@@ -196,6 +184,11 @@ function fetch_data_for_attachment( int $id ) {
 
 function update_attachment_data( int $id ) {
 	$data = fetch_data_for_attachment( $id );
+	$post = get_post( $id );
+
+	// Get current alt text.
+	$alt_text     = trim( (string) get_post_meta( $id, '_wp_attachment_image_alt', true ) );
+	$new_alt_text = '';
 
 	// Collect keywords to factor into searches.
 	$keywords = [];
@@ -206,17 +199,28 @@ function update_attachment_data( int $id ) {
 			continue;
 		}
 
+		// Skip processing if response is empty.
+		if ( empty( $response ) ) {
+			continue;
+		}
+
 		// Save the metadata.
 		update_post_meta( $id, "hm_aws_rekognition_{$type}", $response );
 
 		// Carry out custom handling & processing.
 		switch ( $type ) {
 			case 'labels':
-				wp_set_object_terms( $id, $response, 'rekognition_labels', true );
-				$keywords += $response;
+				$labels = wp_list_pluck( $response, 'Name' );
+
+				// Add all labels as keywords.
+				$keywords = array_merge( $keywords, $labels );
+				wp_set_object_terms( $id, $labels, 'rekognition_labels', true );
+
+				// Use best 3 labels as alt text.
+				$new_alt_text = implode( ', ', array_slice( $labels, 0, 3 ) );
 				break;
 			case 'moderation':
-				$keywords += wp_list_pluck( $response, 'Name' );
+				$keywords = array_merge( $keywords, wp_list_pluck( $response, 'Name' ) );
 				break;
 			case 'faces':
 				foreach ( $response as $face ) {
@@ -224,18 +228,34 @@ function update_attachment_data( int $id ) {
 						$keywords[] = $face['Gender']['Value'];
 					}
 					if ( isset( $face['Emotions'] ) ) {
-						$emotions  = wp_list_pluck( $face['Emotions'], 'Type' );
-						$keywords += $emotions;
+						$emotions = wp_list_pluck( $face['Emotions'], 'Type' );
+						$keywords = array_merge( $keywords, $emotions );
 					}
 				}
 				break;
 			case 'celebrities':
-				$keywords += wp_list_pluck( $response, 'Name' );
+				$keywords = array_merge( wp_list_pluck( $response, 'Name' ), $keywords );
+
+				// Use names as alt text.
+				$new_alt_text = implode( ', ', wp_list_pluck( $response, 'Name' ) );
+
+				// Set default caption.
+				if ( empty( $post->post_excerpt ) ) {
+					wp_update_post( [
+						'ID'           => $id,
+						'post_excerpt' => $new_alt_text,
+					] );
+				}
 				break;
 			case 'text':
-				$keywords += wp_list_pluck( $response, 'DetectedText' );
+				$keywords = array_merge( $keywprds, wp_list_pluck( $response, 'DetectedText' ) );
 				break;
 		}
+	}
+
+	// Set alt text.
+	if ( empty( $alt_text ) ) {
+		update_post_meta( $id, '_wp_attachment_image_alt', $new_alt_text );
 	}
 
 	$keywords = array_filter( $keywords );
@@ -264,19 +284,33 @@ function get_attachment_labels( int $id ) : array {
  * @return \Aws\Rekognition\RekognitionClient
  */
 function get_rekognition_client() : RekognitionClient {
-	if ( defined( 'S3_UPLOADS_KEY' ) && defined( 'S3_UPLOADS_SECRET' ) ) {
-		$credentials = [
+	$client_args = [
+		'version' => '2016-06-27',
+		'region'  => 'us-east-1',
+	];
+
+	if ( defined( 'S3_UPLOADS_KEY' ) && defined( 'S3_UPLOADS_SECRET' ) && defined( 'S3_UPLOADS_REGION' ) ) {
+		$client_args['credentials'] = [
 			'key'    => S3_UPLOADS_KEY,
 			'secret' => S3_UPLOADS_SECRET,
+			'region' => S3_UPLOADS_REGION,
 		];
-	} else {
-		$credentials = null;
+	} elseif ( defined( 'AWS_KEY_ID' ) && defined( 'AWS_KEY_SECRET' ) && defined( 'AWS_REGION' ) ) {
+		$client_args['credentials'] = [
+			'key'    => AWS_KEY_ID,
+			'secret' => AWS_KEY_SECRET,
+			'region' => AWS_REGION,
+		];
 	}
-	return RekognitionClient::factory( [
-		'version'     => '2016-06-27',
-		'region'      => S3_UPLOADS_REGION,
-		'credentials' => $credentials,
-	] );
+
+	/**
+	 * Modify the RekognitionClient configuration.
+	 *
+	 * @param array $client_args Args used to instantiate the RekognitionClient
+	 */
+	$client_args = apply_filters( 'hm.aws.rekognition.client', $client_args );
+
+	return RekognitionClient::factory( $client_args );
 }
 
 /**
@@ -328,8 +362,8 @@ function attachment_taxonomies() {
 	$args = [
 		'hierarchical'      => false,
 		'labels'            => $labels,
-		'show_ui'           => true,
-		'show_admin_column' => true,
+		'show_ui'           => false,
+		'show_admin_column' => false,
 		'query_var'         => true,
 		'public'            => false,
 		'rewrite'           => [ 'slug' => 'label' ],
