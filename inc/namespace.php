@@ -17,6 +17,7 @@ function setup() {
 	add_filter( 'admin_init', __NAMESPACE__ . '\\Admin\\bootstrap' );
 	add_action( CRON_NAME, __NAMESPACE__ . '\\update_attachment_data' );
 	add_action( 'init', __NAMESPACE__ . '\\attachment_taxonomies', 1000 );
+	add_filter( 'wp_prepare_attachment_for_js', __NAMESPACE__ . '\\attachment_js', 10, 3 );
 }
 
 /**
@@ -289,17 +290,17 @@ function get_rekognition_client() : RekognitionClient {
 		'region'  => 'us-east-1',
 	];
 
-	if ( defined( 'S3_UPLOADS_KEY' ) && defined( 'S3_UPLOADS_SECRET' ) && defined( 'S3_UPLOADS_REGION' ) ) {
-		$client_args['credentials'] = [
-			'key'    => S3_UPLOADS_KEY,
-			'secret' => S3_UPLOADS_SECRET,
-			'region' => S3_UPLOADS_REGION,
-		];
-	} elseif ( defined( 'AWS_KEY_ID' ) && defined( 'AWS_KEY_SECRET' ) && defined( 'AWS_REGION' ) ) {
+	if ( defined( 'AWS_KEY_ID' ) && defined( 'AWS_KEY_SECRET' ) && defined( 'AWS_REGION' ) ) {
 		$client_args['credentials'] = [
 			'key'    => AWS_KEY_ID,
 			'secret' => AWS_KEY_SECRET,
 			'region' => AWS_REGION,
+		];
+	} elseif ( defined( 'S3_UPLOADS_KEY' ) && defined( 'S3_UPLOADS_SECRET' ) && defined( 'S3_UPLOADS_REGION' ) ) {
+		$client_args['credentials'] = [
+			'key'    => S3_UPLOADS_KEY,
+			'secret' => S3_UPLOADS_SECRET,
+			'region' => S3_UPLOADS_REGION,
 		];
 	}
 
@@ -370,4 +371,23 @@ function attachment_taxonomies() {
 	];
 
 	register_taxonomy( 'rekognition_labels', [ 'attachment' ], $args );
+}
+
+/**
+ * Add extra meta data to attachment model JSON.
+ *
+ * @param  array $response
+ * @param  \WP_Post $attachment
+ * @return array
+ */
+function attachment_js( $response, $attachment ) {
+	$response['rekognition'] = [
+		'labels'      => get_post_meta( $attachment->ID, 'hm_aws_rekognition_labels', true ) ?: [],
+		'moderation'  => get_post_meta( $attachment->ID, 'hm_aws_rekognition_moderation', true ) ?: [],
+		'faces'       => get_post_meta( $attachment->ID, 'hm_aws_rekognition_faces', true ) ?: [],
+		'celebrities' => get_post_meta( $attachment->ID, 'hm_aws_rekognition_celebrities', true ) ?: [],
+		'text'        => get_post_meta( $attachment->ID, 'hm_aws_rekognition_text', true ) ?: [],
+	];
+
+	return $response;
 }
