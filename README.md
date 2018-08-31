@@ -20,3 +20,28 @@ AWS Rekognition can auto detect image features, providing automatic labeling of 
 ### Demo
 
 ![picture](https://user-images.githubusercontent.com/161683/34051356-473686a4-e18c-11e7-999a-02e31980c897.gif)
+
+### Usage
+
+By default the plugin assumes you have created an AWS access key that has permission to access the Rekognition service.
+
+The default region is `us-east-1`.
+
+Configure the client by defining the following constants:
+
+```php
+<?php
+define( 'AWS_REKOGNITION_REGION', 'eu-west-1' );
+define( 'AWS_REKOGNITION_KEY', '*************' );
+define( 'AWS_REKOGNITION_SECRET', '*************' );
+```
+
+If using the plugin on AWS servers and have an instance profile with permissions to use Rekognition set up you can omit defining the key and secret constants.
+
+### Features
+
+#### Label detection
+#### Moderation label detection
+#### Face detection
+#### Celebrity recognition
+#### Text detection
