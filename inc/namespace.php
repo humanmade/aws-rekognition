@@ -287,8 +287,11 @@ function get_attachment_labels( int $id ) : array {
 function get_rekognition_client() : RekognitionClient {
 	$client_args = [
 		'version' => '2016-06-27',
-		'region'  => 'us-east-1',
 	];
+
+	if ( defined( 'AWS_REKOGNITION_REGION' ) ) {
+		$client_args['region'] = AWS_REKOGNITION_REGION;
+	}
 
 	if ( defined( 'AWS_REKOGNITION_ID' ) && defined( 'AWS_REKOGNITION_SECRET' ) && defined( 'AWS_REKOGNITION_REGION' ) ) {
 		$client_args['credentials'] = [
