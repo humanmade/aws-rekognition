@@ -290,17 +290,11 @@ function get_rekognition_client() : RekognitionClient {
 		'region'  => 'us-east-1',
 	];
 
-	if ( defined( 'AWS_KEY_ID' ) && defined( 'AWS_KEY_SECRET' ) && defined( 'AWS_REGION' ) ) {
+	if ( defined( 'AWS_REKOGNITION_ID' ) && defined( 'AWS_REKOGNITION_SECRET' ) && defined( 'AWS_REKOGNITION_REGION' ) ) {
 		$client_args['credentials'] = [
-			'key'    => AWS_KEY_ID,
-			'secret' => AWS_KEY_SECRET,
-			'region' => AWS_REGION,
-		];
-	} elseif ( defined( 'S3_UPLOADS_KEY' ) && defined( 'S3_UPLOADS_SECRET' ) && defined( 'S3_UPLOADS_REGION' ) ) {
-		$client_args['credentials'] = [
-			'key'    => S3_UPLOADS_KEY,
-			'secret' => S3_UPLOADS_SECRET,
-			'region' => S3_UPLOADS_REGION,
+			'key'    => AWS_REKOGNITION_ID,
+			'secret' => AWS_REKOGNITION_SECRET,
+			'region' => AWS_REKOGNITION_REGION,
 		];
 	}
 
@@ -381,6 +375,10 @@ function attachment_taxonomies() {
  * @return array
  */
 function attachment_js( $response, $attachment ) {
+	if ( wp_attachment_is_image( $attachment ) ) {
+		return $response;
+	}
+
 	$response['rekognition'] = [
 		'labels'      => get_post_meta( $attachment->ID, 'hm_aws_rekognition_labels', true ) ?: [],
 		'moderation'  => get_post_meta( $attachment->ID, 'hm_aws_rekognition_moderation', true ) ?: [],
