@@ -12,7 +12,7 @@ class CLI_Command extends WP_CLI_Command {
 	 * @subcommand list-data-for-attachment <attachment-id>
 	 */
 	public function list_data_for_attachment( array $args, array $args_assoc ) {
-		print_r( fetch_data_for_attachment( $args[0] ) );
+		print_r( fetch_data_for_attachment( $args[0] ) ); // phpcs:ignore
 	}
 
 	/**
@@ -25,7 +25,11 @@ class CLI_Command extends WP_CLI_Command {
 		if ( isset( $args_assoc['attachments'] ) ) {
 			$attachments = explode( ',', $args_assoc['attachments'] );
 		} else {
-			$attachments = get_posts( [ 'post_type' => 'attachment', 'fields' => 'ids', 'posts_per_page' => -1 ] );
+			$attachments = get_posts( [
+				'post_type'      => 'attachment',
+				'fields'         => 'ids',
+				'posts_per_page' => -1, // phpcs:ignore
+			] );
 		}
 
 		foreach ( $attachments as $attachment ) {

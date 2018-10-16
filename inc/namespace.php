@@ -256,6 +256,14 @@ function update_attachment_data( int $id ) {
 
 	// Set alt text.
 	if ( empty( $alt_text ) ) {
+		/**
+		 * Filters the alt text generated from Rekognition data.
+		 *
+		 * @param string $alt_text The alt text string.
+		 * @param array  $data     The full data collection returned.
+		 * @param int    $id       The attachment ID.
+		 */
+		$new_alt_text = apply_filters( 'hm.aws.rekognition.alt_text', $new_alt_text, $data, $id );
 		update_post_meta( $id, '_wp_attachment_image_alt', $new_alt_text );
 	}
 
@@ -272,7 +280,7 @@ function update_attachment_data( int $id ) {
 	$keywords = apply_filters( 'hm.aws.rekognition.keywords', $keywords, $data, $id );
 
 	// Store keywords for use with search queries.
-	update_post_meta( $id, 'hm_aws_rekognition_keywords', strtolower( implode( "\t", $keywords ) ) );
+	update_post_meta( $id, 'hm_aws_rekognition_keywords', strtolower( implode( "\t", (array) $keywords ) ) );
 }
 
 function get_attachment_labels( int $id ) : array {
