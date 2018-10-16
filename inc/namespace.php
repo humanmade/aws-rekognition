@@ -302,9 +302,9 @@ function get_rekognition_client() : RekognitionClient {
 		$client_args['region'] = AWS_REKOGNITION_REGION;
 	}
 
-	if ( defined( 'AWS_REKOGNITION_ID' ) && defined( 'AWS_REKOGNITION_SECRET' ) && defined( 'AWS_REKOGNITION_REGION' ) ) {
+	if ( defined( 'AWS_REKOGNITION_KEY' ) && defined( 'AWS_REKOGNITION_SECRET' ) && defined( 'AWS_REKOGNITION_REGION' ) ) {
 		$client_args['credentials'] = [
-			'key'    => AWS_REKOGNITION_ID,
+			'key'    => AWS_REKOGNITION_KEY,
 			'secret' => AWS_REKOGNITION_SECRET,
 			'region' => AWS_REKOGNITION_REGION,
 		];

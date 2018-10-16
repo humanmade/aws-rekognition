@@ -7,7 +7,7 @@ use WP_CLI;
 /**
  * Name: AWS Rekognition
  * Plugin Author: Joe Hoyle | Human Made
- * Version: 0.1.0
+ * Version: 0.1.1
  */
 
 require __DIR__ . '/inc/namespace.php';
