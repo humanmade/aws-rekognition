@@ -1,0 +1,13 @@
+{
+    "name": "humanmade/aws-rekognition",
+    "description": "Detect labels, faces, celebrities, and text in images automatically for easy searching and alt text generation.",
+    "type": "wordpress-plugin",
+    "license": "GPL-3.0",
+    "authors": [
+        {
+            "name": "Joe Hoyle",
+            "email": "joe@humanmade.com"
+        }
+    ],
+    "require": {}
+}
