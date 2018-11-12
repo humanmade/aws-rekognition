@@ -10,9 +10,6 @@ function bootstrap() {
 }
 
 function output_metabox( WP_Post $post ) {
-	wp_enqueue_script( 'hm-aws-rekognition', plugins_url( '/assets/admin.js', dirname( dirname( __FILE__ ) ) ), [ 'jquery' ] );
-	wp_localize_script( 'hm-aws-rekognition', 'HMAWSRekognition', [ 'update_labels_nonce' => wp_create_nonce( 'hm-aws-rekognition-update-labels-' . $post->ID ), 'post_id' => $post->ID ] );
-
 	$labels = AWS_Rekognition\get_attachment_labels( $post->ID );
 	$labels = array_map( function ( $label ) {
 		return sprintf( '%s (%d%%)', $label['Name'], round( $label['Confidence'], 2 ) );
