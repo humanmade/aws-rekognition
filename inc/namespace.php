@@ -293,6 +293,11 @@ function get_attachment_labels( int $id ) : array {
  * @return \Aws\Rekognition\RekognitionClient
  */
 function get_rekognition_client() : RekognitionClient {
+	static $client;
+	if ( $client ) {
+		return $client;
+	}
+
 	$client_args = [
 		'version' => '2016-06-27',
 		'region'  => 'us-east-1',
@@ -315,9 +320,21 @@ function get_rekognition_client() : RekognitionClient {
 	 *
 	 * @param array $client_args Args used to instantiate the RekognitionClient
 	 */
-	$client_args = apply_filters( 'hm.aws.rekognition.client', $client_args );
+	$client_args = apply_filters( 'hm.aws.rekognition.client_args', $client_args );
 
-	return RekognitionClient::factory( $client_args );
+	/**
+	 * Modify the RekognitionClient client object.
+	 *
+	 * @param null  $client      The client object to override
+	 * @param array $client_args Args used to instantiate the RekognitionClient
+	 */
+	$client = apply_filters( 'hm.aws.rekognition.client', null, $client_args );
+	if ( $client ) {
+		return $client;
+	}
+
+	$client = RekognitionClient::factory( $client_args );
+	return $client;
 }
 
 /**
