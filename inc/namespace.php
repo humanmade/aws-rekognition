@@ -84,6 +84,7 @@ function fetch_data_for_attachment( int $id ) {
 
 			$responses['labels'] = $labels_response['Labels'];
 		} catch ( Exception $e ) {
+			trigger_error( $e->getMessage(), E_USER_WARNING );
 			$responses['labels'] = new WP_Error( 'aws-error', $e->getMessage() );
 		}
 	}
