@@ -304,15 +304,27 @@ function get_rekognition_client() : RekognitionClient {
 		'region'  => 'us-east-1',
 	];
 
-	if ( defined( 'AWS_REKOGNITION_REGION' ) ) {
+	// Supported Rekognition regions.
+	$supported_regions = [
+		'us-east-1',
+		'us-east-2',
+		'us-west-2',
+		'eu-west-1',
+		'ap-south-1',
+		'ap-northeast-1',
+		'ap-northeast-2',
+		'ap-southeast-2',
+	];
+
+	if ( defined( 'AWS_REKOGNITION_REGION' ) && in_array( AWS_REKOGNITION_REGION, $supported_regions, true ) ) {
 		$client_args['region'] = AWS_REKOGNITION_REGION;
 	}
 
-	if ( defined( 'AWS_REKOGNITION_KEY' ) && defined( 'AWS_REKOGNITION_SECRET' ) && defined( 'AWS_REKOGNITION_REGION' ) ) {
+	if ( defined( 'AWS_REKOGNITION_KEY' ) && defined( 'AWS_REKOGNITION_SECRET' ) ) {
 		$client_args['credentials'] = [
 			'key'    => AWS_REKOGNITION_KEY,
 			'secret' => AWS_REKOGNITION_SECRET,
-			'region' => AWS_REKOGNITION_REGION,
+			'region' => $client_args['region'],
 		];
 	}
 
