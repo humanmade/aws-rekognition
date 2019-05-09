@@ -48,8 +48,30 @@ function fetch_data_for_attachment( int $id ) {
 	$file   = get_attached_file( $id );
 	$client = get_rekognition_client();
 
+	$region = $client->getRegion();
+
+	// Supported Rekognition regions.
+	$supported_regions = [
+		'us-east-1',
+		'us-east-2',
+		'us-west-2',
+		'eu-west-1',
+		'ap-south-1',
+		'ap-northeast-1',
+		'ap-northeast-2',
+		'ap-southeast-2',
+	];
+
+	/**
+	 * Pass the S3 object's bucket and location to the AWS Rekogition API, rather than sending the bytes over the wire.
+	 *
+	 * @param bool $use_s3_object_path
+	 * @param int  $id
+	 */
+	$use_s3_object_path = apply_filters( 'hm.aws.rekognition.use_s3_object_path', in_array( $region, $supported_regions, true ), $id );
+
 	// Set up image argument.
-	if ( preg_match( '#s3://(?P<bucket>[^/]+)/(?P<path>.*)#', $file, $matches ) ) {
+	if ( preg_match( '#s3://(?P<bucket>[^/]+)/(?P<path>.*)#', $file, $matches ) && $use_s3_object_path ) {
 		$image_args = [
 			'S3Object' => [
 				'Bucket' => $matches['bucket'],
