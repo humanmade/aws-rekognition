@@ -199,9 +199,11 @@ function fetch_data_for_attachment( int $id ) {
 	 * Allow a convenient place to hook in and use the Rekognition client instance.
 	 *
 	 * @param Aws\Rekognition\RekognitionClient $client The Rekognition client.
-	 * @param int                               $id     The attachment ID.
+	 * @param int $id The attachment ID.
+	 * @param array $image_args The processed image data to set as the 'Image' key 
+	 *                          in calls to client methods.
 	 */
-	do_action( 'hm.aws.rekognition.process', $client, $id );
+	do_action( 'hm.aws.rekognition.process', $client, $id, $image_args );
 
 	return $responses;
 }
