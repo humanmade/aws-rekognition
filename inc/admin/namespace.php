@@ -36,7 +36,30 @@ function get_keywords_html( $post_id, $limit = 10 ) : string {
 	$labels = AWS_Rekognition\get_attachment_labels( $post_id );
 
 	if ( empty( $labels ) ) {
-		return '';
+		// Check if an error was returned.
+		$label_errors = get_post_meta( $post_id, 'hm_aws_rekognition_error_labels', true );
+		if ( is_wp_error( $label_errors ) ) {
+			return sprintf(
+				'<style>
+					.compat-field-hm-aws-rekognition-labels p { margin: 6px 0; }
+				</style>
+				<p>%s</p>
+				<p class="error message">%s: %s</p>',
+				esc_html__( 'There was an error analysing the image.', 'hm-aws-rekognition' ),
+				esc_html( (string) $label_errors->get_error_code() ),
+				esc_html( $label_errors->get_error_message() ?? 'Unspecified error' )
+			);
+		}
+
+		// Image is still in processing.
+		return sprintf(
+			'<style>
+				.compat-field-hm-aws-rekognition-labels .spinner { float: none; margin: -2px 5px 0 0; }
+				.compat-field-hm-aws-rekognition-labels p { margin: 6px 0; }
+			</style>
+			<p><span class="spinner is-active"></span> %s</p>',
+			esc_html__( 'Analysing...', 'hm-aws-rekognition' )
+		);
 	}
 
 	// Limit results.
