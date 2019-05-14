@@ -272,7 +272,7 @@ function update_attachment_data( int $id ) {
 				}
 				break;
 			case 'text':
-				$keywords = array_merge( $keywprds, wp_list_pluck( $response, 'DetectedText' ) );
+				$keywords = array_merge( $keywords, wp_list_pluck( $response, 'DetectedText' ) );
 				break;
 		}
 	}
