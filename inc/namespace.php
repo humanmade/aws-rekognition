@@ -353,6 +353,7 @@ function get_rekognition_client() : RekognitionClient {
 
 	// Ensure region is supported.
 	if ( ! in_array( $client_args['region'], get_supported_regions(), true ) ) {
+		trigger_error( sprintf( 'AWS Rekognition: The region %s is unsupported, falling back to "us-east-1"', $client_args['region'] ), E_USER_WARNING );
 		$client_args['region'] = 'us-east-1';
 	}
 
