@@ -47,28 +47,21 @@ function on_update_attachment_metadata( array $data, int $id ) : array {
 function fetch_data_for_attachment( int $id ) {
 	$file   = get_attached_file( $id );
 	$client = get_rekognition_client();
-
 	$region = $client->getRegion();
 
-	// Supported Rekognition regions.
-	$supported_regions = [
-		'us-east-1',
-		'us-east-2',
-		'us-west-2',
-		'eu-west-1',
-		'ap-south-1',
-		'ap-northeast-1',
-		'ap-northeast-2',
-		'ap-southeast-2',
-	];
-
 	/**
-	 * Pass the S3 object's bucket and location to the AWS Rekogition API, rather than sending the bytes over the wire.
+	 * Pass the S3 object's bucket and location to the AWS Rekogition API,
+	 * if the bucket region matches the client region rather than sending
+	 * the bytes over the wire.
 	 *
 	 * @param bool $use_s3_object_path
 	 * @param int  $id
 	 */
-	$use_s3_object_path = apply_filters( 'hm.aws.rekognition.use_s3_object_path', in_array( $region, $supported_regions, true ), $id );
+	$use_s3_object_path = apply_filters(
+		'hm.aws.rekognition.use_s3_object_path',
+		defined( 'S3_UPLOADS_REGION' ) && S3_UPLOADS_REGION === $region,
+		$id
+	);
 
 	// Set up image argument.
 	if ( preg_match( '#s3://(?P<bucket>[^/]+)/(?P<path>.*)#', $file, $matches ) && $use_s3_object_path ) {
@@ -200,7 +193,7 @@ function fetch_data_for_attachment( int $id ) {
 	 *
 	 * @param Aws\Rekognition\RekognitionClient $client The Rekognition client.
 	 * @param int $id The attachment ID.
-	 * @param array $image_args The processed image data to set as the 'Image' key 
+	 * @param array $image_args The processed image data to set as the 'Image' key
 	 *                          in calls to client methods.
 	 */
 	do_action( 'hm.aws.rekognition.process', $client, $id, $image_args );
@@ -313,6 +306,28 @@ function get_attachment_labels( int $id ) : array {
 }
 
 /**
+ * Supported Rekognition regions.
+ *
+ * @return array
+ */
+function get_supported_regions() : array {
+	return [
+		'us-east-1',
+		'us-east-2',
+		'us-west-1',
+		'us-west-2',
+		'eu-west-1',
+		'eu-west-2',
+		'eu-central-1',
+		'ap-south-1',
+		'ap-northeast-1',
+		'ap-northeast-2',
+		'ap-southeast-1',
+		'ap-southeast-2',
+	];
+}
+
+/**
  * Get the AWS Rekognition client.
  *
  * @return \Aws\Rekognition\RekognitionClient
@@ -328,15 +343,25 @@ function get_rekognition_client() : RekognitionClient {
 		'region'  => 'us-east-1',
 	];
 
+	// Compat with S3 Uploads.
+	if ( defined( 'S3_UPLOADS_REGION' ) ) {
+		$client_args['region'] = S3_UPLOADS_REGION;
+	}
 	if ( defined( 'AWS_REKOGNITION_REGION' ) ) {
 		$client_args['region'] = AWS_REKOGNITION_REGION;
 	}
 
-	if ( defined( 'AWS_REKOGNITION_KEY' ) && defined( 'AWS_REKOGNITION_SECRET' ) && defined( 'AWS_REKOGNITION_REGION' ) ) {
+	// Ensure region is supported.
+	if ( ! in_array( $client_args['region'], get_supported_regions(), true ) ) {
+		$client_args['region'] = 'us-east-1';
+	}
+
+	// Use credentials if provided.
+	if ( defined( 'AWS_REKOGNITION_KEY' ) && defined( 'AWS_REKOGNITION_SECRET' ) ) {
 		$client_args['credentials'] = [
 			'key'    => AWS_REKOGNITION_KEY,
 			'secret' => AWS_REKOGNITION_SECRET,
-			'region' => AWS_REKOGNITION_REGION,
+			'region' => $client_args['region'],
 		];
 	}
 
