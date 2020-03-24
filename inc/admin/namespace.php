@@ -23,13 +23,13 @@ function attachment_fields( $fields, WP_Post $post ) {
 		return $fields;
 	}
 
-	$form_fields['hm-aws-rekognition-labels'] = [
+	$fields['hm-aws-rekognition-labels'] = [
 		'label' => __( 'Detected Image labels', 'hm-aws-rekognition' ),
 		'input' => 'html',
 		'html'  => get_keywords_html( $post->ID ),
 	];
 
-	return $form_fields;
+	return $fields;
 }
 
 function get_keywords_html( $post_id, $limit = 10 ) : string {
