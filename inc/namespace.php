@@ -100,7 +100,7 @@ function fetch_data_for_attachment( int $id ) {
 			$responses['labels'] = $labels_response['Labels'];
 		} catch ( Exception $e ) {
 			trigger_error( $e->getMessage(), E_USER_WARNING );
-			$responses['labels'] = new WP_Error( 'aws-error', $e->getMessage() );
+			$responses['labels'] = new WP_Error( 'aws-rekognition-error', $e->getMessage() );
 		}
 	}
 
@@ -123,7 +123,8 @@ function fetch_data_for_attachment( int $id ) {
 
 			$responses['moderation'] = $moderation_response['ModerationLabels'];
 		} catch ( Exception $e ) {
-			$responses['moderation'] = new WP_Error( 'aws-error', $e->getMessage() );
+			trigger_error( $e->getMessage(), E_USER_WARNING );
+			$responses['moderation'] = new WP_Error( 'aws-rekognition-error', $e->getMessage() );
 		}
 	}
 
@@ -144,7 +145,8 @@ function fetch_data_for_attachment( int $id ) {
 
 			$responses['faces'] = $faces_response['FaceDetails'];
 		} catch ( Exception $e ) {
-			$responses['faces'] = new WP_Error( 'aws-error', $e->getMessage() );
+			trigger_error( $e->getMessage(), E_USER_WARNING );
+			$responses['faces'] = new WP_Error( 'aws-rekognition-error', $e->getMessage() );
 		}
 	}
 
@@ -164,7 +166,8 @@ function fetch_data_for_attachment( int $id ) {
 
 			$responses['celebrities'] = $celebrities_response['CelebrityFaces'];
 		} catch ( Exception $e ) {
-			$responses['celebrities'] = new WP_Error( 'aws-error', $e->getMessage() );
+			trigger_error( $e->getMessage(), E_USER_WARNING );
+			$responses['celebrities'] = new WP_Error( 'aws-rekognition-error', $e->getMessage() );
 		}
 	}
 
@@ -184,7 +187,8 @@ function fetch_data_for_attachment( int $id ) {
 
 			$responses['text'] = $text_response['TextDetections'];
 		} catch ( Exception $e ) {
-			$responses['text'] = new WP_Error( 'aws-error', $e->getMessage() );
+			trigger_error( $e->getMessage(), E_USER_WARNING );
+			$responses['text'] = new WP_Error( 'aws-rekognition-error', $e->getMessage() );
 		}
 	}
 

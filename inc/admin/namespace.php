@@ -11,6 +11,9 @@ function bootstrap() {
 }
 
 function output_metabox( WP_Post $post ) {
+	if ( ! wp_attachment_is_image( $post->ID ) ) {
+		return;
+	}
 	echo get_keywords_html( $post->ID, 20 );
 }
 
@@ -20,6 +23,11 @@ function attachment_fields( $fields, WP_Post $post ) {
 
 	// We use a metabox on the attachment edit screen.
 	if ( $action === 'edit' && intval( $post_id ) === $post->ID ) {
+		return $fields;
+	}
+
+	// Check attachment type.
+	if ( ! wp_attachment_is_image( $post->ID ) ) {
 		return $fields;
 	}
 
@@ -43,11 +51,8 @@ function get_keywords_html( $post_id, $limit = 10 ) : string {
 				'<style>
 					.compat-field-hm-aws-rekognition-labels p { margin: 6px 0; }
 				</style>
-				<p>%s</p>
-				<p class="error message">%s: %s</p>',
-				esc_html__( 'There was an error analysing the image.', 'hm-aws-rekognition' ),
-				esc_html( (string) $label_errors->get_error_code() ),
-				esc_html( $label_errors->get_error_message() ?? 'Unspecified error' )
+				<p>%s</p>',
+				esc_html__( 'There was an error analysing the image. Check the error log for details.', 'hm-aws-rekognition' )
 			);
 		}
 
