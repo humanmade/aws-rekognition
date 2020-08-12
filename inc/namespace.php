@@ -29,6 +29,10 @@ function setup() {
  * @return $data
  */
 function on_update_attachment_metadata( array $data, int $id ) : array {
+	if ( ! wp_attachment_is_image( $id ) ) {
+		return $data;
+	}
+
 	$image_types = [ IMAGETYPE_GIF, IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_BMP ];
 	$mime        = exif_imagetype( get_attached_file( $id ) );
 	if ( ! in_array( $mime, $image_types, true ) ) {
@@ -45,6 +49,10 @@ function on_update_attachment_metadata( array $data, int $id ) : array {
  * @return bool|WP_Error
  */
 function fetch_data_for_attachment( int $id ) {
+	if ( ! wp_attachment_is_image( $id ) ) {
+		return false;
+	}
+
 	$file   = get_attached_file( $id );
 	$client = get_rekognition_client();
 	$region = $client->getRegion();
@@ -203,6 +211,10 @@ function fetch_data_for_attachment( int $id ) {
 
 function update_attachment_data( int $id ) {
 	$data = fetch_data_for_attachment( $id );
+	if ( ! $data ) {
+		return;
+	}
+
 	$post = get_post( $id );
 
 	// Get current alt text.
