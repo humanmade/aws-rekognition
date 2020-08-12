@@ -73,6 +73,7 @@ function fetch_data_for_attachment( int $id ) {
 		];
 	} else {
 		$image_args = [
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 			'Bytes' => file_get_contents( $file ),
 		];
 	}
@@ -99,6 +100,7 @@ function fetch_data_for_attachment( int $id ) {
 
 			$responses['labels'] = $labels_response['Labels'];
 		} catch ( Exception $e ) {
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			trigger_error( $e->getMessage(), E_USER_WARNING );
 			$responses['labels'] = new WP_Error( 'aws-rekognition-error', $e->getMessage() );
 		}
@@ -123,6 +125,7 @@ function fetch_data_for_attachment( int $id ) {
 
 			$responses['moderation'] = $moderation_response['ModerationLabels'];
 		} catch ( Exception $e ) {
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			trigger_error( $e->getMessage(), E_USER_WARNING );
 			$responses['moderation'] = new WP_Error( 'aws-rekognition-error', $e->getMessage() );
 		}
@@ -145,6 +148,7 @@ function fetch_data_for_attachment( int $id ) {
 
 			$responses['faces'] = $faces_response['FaceDetails'];
 		} catch ( Exception $e ) {
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			trigger_error( $e->getMessage(), E_USER_WARNING );
 			$responses['faces'] = new WP_Error( 'aws-rekognition-error', $e->getMessage() );
 		}
@@ -166,6 +170,7 @@ function fetch_data_for_attachment( int $id ) {
 
 			$responses['celebrities'] = $celebrities_response['CelebrityFaces'];
 		} catch ( Exception $e ) {
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			trigger_error( $e->getMessage(), E_USER_WARNING );
 			$responses['celebrities'] = new WP_Error( 'aws-rekognition-error', $e->getMessage() );
 		}
@@ -187,6 +192,7 @@ function fetch_data_for_attachment( int $id ) {
 
 			$responses['text'] = $text_response['TextDetections'];
 		} catch ( Exception $e ) {
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			trigger_error( $e->getMessage(), E_USER_WARNING );
 			$responses['text'] = new WP_Error( 'aws-rekognition-error', $e->getMessage() );
 		}
@@ -357,6 +363,7 @@ function get_rekognition_client() : RekognitionClient {
 
 	// Ensure region is supported.
 	if ( ! in_array( $client_args['region'], get_supported_regions(), true ) ) {
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		trigger_error( sprintf( 'AWS Rekognition: The region %s is unsupported, falling back to "us-east-1"', $client_args['region'] ), E_USER_WARNING );
 		$client_args['region'] = 'us-east-1';
 	}

@@ -14,6 +14,7 @@ function output_metabox( WP_Post $post ) {
 	if ( ! wp_attachment_is_image( $post->ID ) ) {
 		return;
 	}
+	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	echo get_keywords_html( $post->ID, 20 );
 }
 
@@ -52,7 +53,7 @@ function get_keywords_html( $post_id, $limit = 10 ) : string {
 					.compat-field-hm-aws-rekognition-labels p { margin: 6px 0; }
 				</style>
 				<p>%s</p>',
-				esc_html__( 'There was an error analysing the image. Check the error log for details.', 'hm-aws-rekognition' )
+				esc_html__( 'There was an error analyzing the image.', 'hm-aws-rekognition' )
 			);
 		}
 
@@ -63,7 +64,7 @@ function get_keywords_html( $post_id, $limit = 10 ) : string {
 				.compat-field-hm-aws-rekognition-labels p { margin: 6px 0; }
 			</style>
 			<p><span class="spinner is-active"></span> %s</p>',
-			esc_html__( 'Analysing...', 'hm-aws-rekognition' )
+			esc_html__( 'Analyzing...', 'hm-aws-rekognition' )
 		);
 	}
 
