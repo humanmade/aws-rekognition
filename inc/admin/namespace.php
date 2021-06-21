@@ -47,7 +47,7 @@ function get_keywords_html( $post_id, $limit = 10 ) : string {
 	if ( empty( $labels ) ) {
 		// Check if an error was returned.
 		$label_errors = get_post_meta( $post_id, 'hm_aws_rekognition_error_labels', true );
-		if ( is_wp_error( $label_errors ) ) {
+		if ( ! empty( $label_errors ) ) {
 			return sprintf(
 				'<style>
 					.compat-field-hm-aws-rekognition-labels p { margin: 6px 0; }
@@ -63,8 +63,19 @@ function get_keywords_html( $post_id, $limit = 10 ) : string {
 				.compat-field-hm-aws-rekognition-labels .spinner { float: none; margin: -2px 5px 0 0; }
 				.compat-field-hm-aws-rekognition-labels p { margin: 6px 0; }
 			</style>
-			<p><span class="spinner is-active"></span> %s</p>',
-			esc_html__( 'Analyzing...', 'hm-aws-rekognition' )
+			<p><span class="spinner is-active"></span> %1$s</p>
+			<script>
+				( function () {
+					setTimeout( function () {
+						wp.media.model.Attachment.get( %2$d ).fetch();
+					}, 5000 );
+					jQuery( document ).on( \'heartbeat-tick\', function ( event, data ) {
+						wp.media.model.Attachment.get( %2$d ).fetch();
+					} );
+				} )();
+			</script>',
+			esc_html__( 'Analyzing...', 'hm-aws-rekognition' ),
+			$post_id
 		);
 	}
 
