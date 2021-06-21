@@ -39,8 +39,9 @@ function on_update_attachment_metadata( array $data, int $id ) : array {
 		return $data;
 	}
 
-	$image_types = [ IMAGETYPE_GIF, IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_BMP ];
-	$mime        = exif_imagetype( get_attached_file( $id ) );
+	// Rekognition only supports JPEG and PNG.
+	$image_types = [ 'image/jpeg', 'image/png' ];
+	$mime = get_post_mime_type( $id );
 	if ( ! in_array( $mime, $image_types, true ) ) {
 		return $data;
 	}
