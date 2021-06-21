@@ -50,7 +50,7 @@ function get_keywords_html( $post_id, $limit = 10 ) : string {
 	if ( ! AWS_Rekognition\is_available() ) {
 		return sprintf(
 			$error_markup,
-			esc_html__( 'Rekognition is currently unavailable.', 'hm-aws-rekognition' )
+			esc_html__( 'Image recognition is currently unavailable.', 'hm-aws-rekognition' )
 		);
 	}
 
