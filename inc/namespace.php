@@ -12,9 +12,15 @@ const CRON_NAME = 'hm_aws_rekognition_update_image';
  * Register hooks here.
  */
 function setup() {
+	add_filter( 'admin_init', __NAMESPACE__ . '\\Admin\\bootstrap' );
+
+	// Check the Rekognition client is valid before hooking in further to avoid unnecessary queries.
+	if ( ! is_available() ) {
+		return;
+	}
+
 	add_filter( 'wp_update_attachment_metadata', __NAMESPACE__ . '\\on_update_attachment_metadata', 10, 2 );
 	add_filter( 'posts_clauses', __NAMESPACE__ . '\\filter_query_attachment_keywords' );
-	add_filter( 'admin_init', __NAMESPACE__ . '\\Admin\\bootstrap' );
 	add_action( CRON_NAME, __NAMESPACE__ . '\\update_attachment_data' );
 	add_action( 'init', __NAMESPACE__ . '\\attachment_taxonomies', 1000 );
 	add_filter( 'wp_prepare_attachment_for_js', __NAMESPACE__ . '\\attachment_js', 10, 3 );
@@ -409,6 +415,30 @@ function get_rekognition_client() : RekognitionClient {
 
 	$client = RekognitionClient::factory( $client_args );
 	return $client;
+}
+
+/**
+ * Check if the Rekognition Client is available.
+ *
+ * @return boolean
+ */
+function is_available() : bool {
+	$is_available = wp_cache_get( 'available', 'aws-rekognition', true, $found );
+	if ( $found ) {
+		return $is_available;
+	}
+
+	try {
+		$client = get_rekognition_client();
+		$client->getCredentials()->wait();
+		$is_available = true;
+	} catch ( Exception $e ) {
+		$is_available = false;
+	}
+
+	wp_cache_set( 'available', $is_available, 'aws-rekognition' );
+
+	return $is_available;
 }
 
 /**

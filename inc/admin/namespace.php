@@ -42,6 +42,18 @@ function attachment_fields( $fields, WP_Post $post ) {
 }
 
 function get_keywords_html( $post_id, $limit = 10 ) : string {
+	$error_markup = '<style>
+		.compat-field-hm-aws-rekognition-labels p { margin: 6px 0; }
+	</style>
+	<p>%s</p>';
+
+	if ( ! AWS_Rekognition\is_available() ) {
+		return sprintf(
+			$error_markup,
+			esc_html__( 'Image recognition is currently unavailable.', 'hm-aws-rekognition' )
+		);
+	}
+
 	$labels = AWS_Rekognition\get_attachment_labels( $post_id );
 
 	if ( empty( $labels ) ) {
@@ -49,10 +61,7 @@ function get_keywords_html( $post_id, $limit = 10 ) : string {
 		$label_errors = get_post_meta( $post_id, 'hm_aws_rekognition_error_labels', true );
 		if ( is_wp_error( $label_errors ) ) {
 			return sprintf(
-				'<style>
-					.compat-field-hm-aws-rekognition-labels p { margin: 6px 0; }
-				</style>
-				<p>%s</p>',
+				$error_markup,
 				esc_html__( 'There was an error analyzing the image.', 'hm-aws-rekognition' )
 			);
 		}
