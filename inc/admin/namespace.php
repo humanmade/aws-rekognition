@@ -19,7 +19,7 @@ function output_metabox( WP_Post $post ) {
 }
 
 function attachment_fields( $fields, WP_Post $post ) {
-	$action  = filter_input( INPUT_GET, 'action', FILTER_SANITIZE_STRING );
+	$action  = filter_input( INPUT_GET, 'action', FILTER_UNSAFE_RAW );
 	$post_id = filter_input( INPUT_GET, 'post', FILTER_SANITIZE_NUMBER_INT );
 
 	// We use a metabox on the attachment edit screen.
