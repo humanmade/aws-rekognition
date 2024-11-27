@@ -18,7 +18,11 @@ function output_metabox( WP_Post $post ) {
 	echo get_keywords_html( $post->ID, 20 );
 }
 
-function attachment_fields( $fields, WP_Post $post ) {
+function attachment_fields( $fields, ?WP_Post $post ) {
+	if ( empty( $post ) ) {
+		return $fields;
+	}
+
 	$action  = filter_input( INPUT_GET, 'action', FILTER_UNSAFE_RAW );
 	$post_id = filter_input( INPUT_GET, 'post', FILTER_SANITIZE_NUMBER_INT );
 
